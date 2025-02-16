@@ -1,7 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash
-from sqlalchemy import func
-
+from sqlalchemy.sql.expression import func
 from app import app
 
 db = SQLAlchemy(app)
@@ -26,11 +25,14 @@ class User(db.Model):
     cat = Category.query.filter_by(user_id=self.id, text=category).first()
     if not cat:
       cat = Category(user_id=self.id, text=category)
+      db.session.add(cat)
+      db.session.commit()
 
-    todoCategory = TodoCategory(todo_id=todo.id, category_id=cat.id)
-    todo.categories.append(todoCategory)
-    db.session.add(todo)
-    db.session.commit()
+    if cat not in todo.categories:
+      todo.categories.append(cat)
+      db.session.add(todo)
+      db.session.commit()
+
     return True
 
   def __init__(self, username, email, password):
